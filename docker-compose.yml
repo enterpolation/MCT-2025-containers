@@ -8,8 +8,13 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:80/health" ]
+      test:
+        - CMD-SHELL
+        - >
+          python -c "import sys,urllib.request; sys.exit(0) if urllib.request.urlopen('http://localhost:80/health').getcode()==200 else sys.exit(1)"
       interval: 30s
       timeout: 10s
       retries: 3
@@ -27,6 +32,15 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  db-init:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/mydatabase
+    command: ["python", "-m", "init_db"]
 
 volumes:
   postgres_data:
