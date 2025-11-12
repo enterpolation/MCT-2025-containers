@@ -54,6 +54,19 @@ jobs:
         run: |
           docker compose exec -T db pg_isready -U user -d mydatabase
 
+      - name: Verify Redis is running
+        run: |
+          status=$(docker compose ps redis --format json | jq -r '.[0].State')
+          echo "Redis state: $status"
+          if [[ "$status" != "running" ]]; then
+            echo "Redis is not running"
+            exit 1
+          fi
+          
+      - name: Test Redis connection
+        run: |
+          docker compose exec -T redis redis-cli ping
+
       - name: Show logs on failure
         if: failure()
         run: docker compose logs

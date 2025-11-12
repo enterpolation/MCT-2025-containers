@@ -5,11 +5,14 @@ services:
       - "8000:80"
     environment:
       - DATABASE_URL=postgresql://user:password@db:5432/mydatabase
+      - REDIS_URL=redis://redis:6379/0
     depends_on:
       db:
         condition: service_healthy
       db-init:
         condition: service_completed_successfully
+      redis:
+        condition: service_healthy
     healthcheck:
       test:
         - CMD-SHELL
@@ -42,5 +45,16 @@ services:
       - DATABASE_URL=postgresql://user:password@db:5432/mydatabase
     command: ["python", "-m", "init_db"]
 
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
 volumes:
   postgres_data:
+  redis_data:
